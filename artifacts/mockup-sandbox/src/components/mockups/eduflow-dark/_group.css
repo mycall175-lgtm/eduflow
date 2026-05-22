@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --eduflow-dark-bg: 230 25% 6%;
+  --eduflow-dark-card: 230 25% 10%;
+  --eduflow-dark-border: 230 25% 15%;
+  --eduflow-dark-primary: 255 85% 65%;
+  --eduflow-dark-primary-glow: 255 85% 65% / 0.2;
+  --eduflow-dark-text: 230 20% 90%;
+  --eduflow-dark-text-muted: 230 15% 65%;
+}
+
+.eduflow-dark-theme {
+  font-family: 'Outfit', sans-serif;
+  background-color: hsl(var(--eduflow-dark-bg));
+  color: hsl(var(--eduflow-dark-text));
+}
+
+.eduflow-dark-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.eduflow-dark-text-gradient {
+  background: linear-gradient(135deg, #a881ff 0%, #7044ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.eduflow-dark-glow-button {
+  box-shadow: 0 0 20px var(--eduflow-dark-primary-glow);
+  transition: all 0.3s ease;
+}
+
+.eduflow-dark-glow-button:hover {
+  box-shadow: 0 0 30px rgba(168, 129, 255, 0.4);
+  transform: translateY(-2px);
+}

@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+.eduflow-bold-theme {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #FDFBF7;
+  color: #1A1A1A;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

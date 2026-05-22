@@ -1,0 +1,1100 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: EduFlow LMS API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Student authentication
+  - name: admin
+    description: Tutor/admin authentication and management
+  - name: playlists
+    description: Course playlists
+  - name: content
+    description: Video content
+  - name: comments
+    description: Video comments
+  - name: likes
+    description: Video likes
+  - name: bookmarks
+    description: Course bookmarks
+  - name: tutors
+    description: Tutors/teachers
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ────────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: registerStudent
+      tags: [auth]
+      summary: Register a new student account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginStudent
+      tags: [auth]
+      summary: Student login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutStudent
+      tags: [auth]
+      summary: Student logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentStudent
+      tags: [auth]
+      summary: Get current logged-in student
+      responses:
+        "200":
+          description: Current student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Admin Auth ──────────────────────────────────────────────────────────────
+  /admin/login:
+    post:
+      operationId: loginAdmin
+      tags: [admin]
+      summary: Tutor/admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTutor"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/logout:
+    post:
+      operationId: logoutAdmin
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/me:
+    get:
+      operationId: getAdminMe
+      tags: [admin]
+      summary: Get current logged-in tutor
+      responses:
+        "200":
+          description: Current tutor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTutor"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Dashboard statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/profile:
+    patch:
+      operationId: updateAdminProfile
+      tags: [admin]
+      summary: Update tutor profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorProfileUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTutor"
+
+  /admin/comments:
+    get:
+      operationId: listAllComments
+      tags: [admin]
+      summary: List all comments (admin)
+      responses:
+        "200":
+          description: All comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommentWithContext"
+
+  /admin/comments/{id}:
+    delete:
+      operationId: deleteComment
+      tags: [admin]
+      summary: Delete a comment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── Playlists ───────────────────────────────────────────────────────────────
+  /playlists:
+    get:
+      operationId: listPlaylists
+      tags: [playlists]
+      summary: List all active playlists
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Playlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlaylistSummary"
+    post:
+      operationId: createPlaylist
+      tags: [playlists]
+      summary: Create a playlist (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+
+  /playlists/{id}:
+    get:
+      operationId: getPlaylist
+      tags: [playlists]
+      summary: Get a single playlist with its videos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaylistDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePlaylist
+      tags: [playlists]
+      summary: Update a playlist (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+    delete:
+      operationId: deletePlaylist
+      tags: [playlists]
+      summary: Delete a playlist (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/playlists:
+    get:
+      operationId: listAdminPlaylists
+      tags: [admin]
+      summary: List all playlists for admin management
+      responses:
+        "200":
+          description: All playlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlaylistSummary"
+
+  # ── Content ─────────────────────────────────────────────────────────────────
+  /content:
+    get:
+      operationId: listContent
+      tags: [content]
+      summary: List all content
+      parameters:
+        - name: playlistId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Content list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContentItem"
+    post:
+      operationId: createContent
+      tags: [content]
+      summary: Create content (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentItem"
+
+  /content/{id}:
+    get:
+      operationId: getContent
+      tags: [content]
+      summary: Get a single content item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Content item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateContent
+      tags: [content]
+      summary: Update content (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentItem"
+    delete:
+      operationId: deleteContent
+      tags: [content]
+      summary: Delete content (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── Comments ─────────────────────────────────────────────────────────────────
+  /content/{id}/comments:
+    get:
+      operationId: listComments
+      tags: [comments]
+      summary: List comments for a video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: addComment
+      tags: [comments]
+      summary: Add a comment to a video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  # ── Likes ────────────────────────────────────────────────────────────────────
+  /content/{id}/like:
+    get:
+      operationId: getLikeStatus
+      tags: [likes]
+      summary: Get like status and count for a video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Like status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+    post:
+      operationId: toggleLike
+      tags: [likes]
+      summary: Toggle like on a video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Like toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+
+  # ── Bookmarks ────────────────────────────────────────────────────────────────
+  /bookmarks:
+    get:
+      operationId: listBookmarks
+      tags: [bookmarks]
+      summary: Get current user's bookmarks
+      responses:
+        "200":
+          description: Bookmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookmarkedPlaylist"
+    post:
+      operationId: addBookmark
+      tags: [bookmarks]
+      summary: Bookmark a playlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookmarkInput"
+      responses:
+        "201":
+          description: Bookmarked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /bookmarks/{playlistId}:
+    delete:
+      operationId: removeBookmark
+      tags: [bookmarks]
+      summary: Remove a bookmark
+      parameters:
+        - name: playlistId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /bookmarks/{playlistId}/status:
+    get:
+      operationId: getBookmarkStatus
+      tags: [bookmarks]
+      summary: Check if a playlist is bookmarked
+      parameters:
+        - name: playlistId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bookmark status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookmarkStatus"
+
+  # ── Tutors ───────────────────────────────────────────────────────────────────
+  /tutors:
+    get:
+      operationId: listTutors
+      tags: [tutors]
+      summary: List all tutors
+      responses:
+        "200":
+          description: Tutors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tutor"
+
+  /tutors/{id}:
+    get:
+      operationId: getTutor
+      tags: [tutors]
+      summary: Get a tutor with their playlists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tutor detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorDetail"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    # ── Auth ─────────────────────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        image:
+          type: ["string", "null"]
+
+    AuthTutor:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        profession:
+          type: ["string", "null"]
+        image:
+          type: ["string", "null"]
+
+    AdminStats:
+      type: object
+      required: [totalStudents, totalPlaylists, totalVideos, totalComments]
+      properties:
+        totalStudents:
+          type: integer
+        totalPlaylists:
+          type: integer
+        totalVideos:
+          type: integer
+        totalComments:
+          type: integer
+        totalLikes:
+          type: integer
+
+    TutorProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        profession:
+          type: string
+        image:
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    # ── Playlists ─────────────────────────────────────────────────────────────
+    PlaylistInput:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    PlaylistUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    Playlist:
+      type: object
+      required: [id, title, description, status]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: ["string", "null"]
+        status:
+          type: string
+        tutorId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    PlaylistSummary:
+      type: object
+      required: [id, title, description, status]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: ["string", "null"]
+        status:
+          type: string
+        tutorId:
+          type: integer
+        tutorName:
+          type: ["string", "null"]
+        videoCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    PlaylistDetail:
+      type: object
+      required: [id, title, description, status, videos]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: ["string", "null"]
+        status:
+          type: string
+        tutorId:
+          type: integer
+        tutorName:
+          type: ["string", "null"]
+        tutorProfession:
+          type: ["string", "null"]
+        videoCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentItem"
+
+    # ── Content ───────────────────────────────────────────────────────────────
+    ContentInput:
+      type: object
+      required: [playlistId, title, description, videoUrl]
+      properties:
+        playlistId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    ContentUpdate:
+      type: object
+      properties:
+        playlistId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    ContentItem:
+      type: object
+      required: [id, title, description, videoUrl, status]
+      properties:
+        id:
+          type: integer
+        playlistId:
+          type: integer
+        tutorId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        status:
+          type: string
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ContentDetail:
+      type: object
+      required: [id, title, description, videoUrl, status]
+      properties:
+        id:
+          type: integer
+        playlistId:
+          type: integer
+        playlistTitle:
+          type: ["string", "null"]
+        tutorId:
+          type: integer
+        tutorName:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        status:
+          type: string
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Comments ──────────────────────────────────────────────────────────────
+    CommentInput:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
+          minLength: 1
+
+    Comment:
+      type: object
+      required: [id, comment]
+      properties:
+        id:
+          type: integer
+        contentId:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        tutorId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CommentWithContext:
+      type: object
+      required: [id, comment]
+      properties:
+        id:
+          type: integer
+        contentId:
+          type: integer
+        contentTitle:
+          type: ["string", "null"]
+        userId:
+          type: ["integer", "null"]
+        tutorId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Likes ─────────────────────────────────────────────────────────────────
+    LikeStatus:
+      type: object
+      required: [liked, count]
+      properties:
+        liked:
+          type: boolean
+        count:
+          type: integer
+
+    # ── Bookmarks ─────────────────────────────────────────────────────────────
+    BookmarkInput:
+      type: object
+      required: [playlistId]
+      properties:
+        playlistId:
+          type: integer
+
+    BookmarkStatus:
+      type: object
+      required: [bookmarked]
+      properties:
+        bookmarked:
+          type: boolean
+
+    BookmarkedPlaylist:
+      type: object
+      required: [playlistId, title]
+      properties:
+        bookmarkId:
+          type: integer
+        playlistId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        image:
+          type: ["string", "null"]
+        tutorName:
+          type: ["string", "null"]
+        videoCount:
+          type: integer
+        bookmarkedAt:
+          type: string
+          format: date-time
+
+    # ── Tutors ────────────────────────────────────────────────────────────────
+    Tutor:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        profession:
+          type: ["string", "null"]
+        image:
+          type: ["string", "null"]
+        playlistCount:
+          type: integer
+
+    TutorDetail:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        profession:
+          type: ["string", "null"]
+        image:
+          type: ["string", "null"]
+        playlistCount:
+          type: integer
+        playlists:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaylistSummary"
